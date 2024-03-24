@@ -7,13 +7,21 @@ FaceAttendence::FaceAttendence(QWidget *parent)
 {
     ui->setupUi(this);
 
+#ifdef WIN32
     //打开摄像头
     cap.open(0);//如果是linux的话，dev/video
-    //启动定时器，每多少毫秒采集一次
-    startTimer(100);
-
     //导入级联分类器
     cascade.load("E:/Environment/opencv452/etc/haarcascades/haarcascade_frontalface_alt2.xml");
+//linux和安卓
+#else
+    //打开摄像头
+    cap.open(/dev/video0);//如果是linux的话，dev/video
+    //导入级联分类器
+    cascade.load("./haarcascade_frontalface_alt2.xml");
+
+#endif
+    //启动定时器，每多少毫秒采集一次
+    startTimer(100);
 
     //QTcpSocket当断开连接的时候disconnected信号，连接成功会发送connected
     connect(&m_socket,&QTcpSocket::disconnected,this,&FaceAttendence::start_connect);
@@ -53,7 +61,7 @@ void FaceAttendence::timerEvent(QTimerEvent *e)
 
     //检测人脸
     std::vector<Rect> faceRects;
-    cascade.detectMultiScale(grayImage,faceRects,1.1,3);
+    cascade.detectMultiScale(grayImage,faceRects,1.1,3,0,cv::Size(150,150));
 
     // 如果检测到人脸且 flag_onepersion 大于等于 0
     if(faceRects.size()>0 && flag_onepersion >=0)
